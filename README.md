@@ -37,7 +37,7 @@ The development version can be installed directly from Github:
 
 ```r
 install.packages("devtools")
-devtools::install_github("Manuelaio/uncoverappLib")
+devtools::install_github("annaballestrazzi/uncoverappLib")
 ```
 
 ## Introduction
