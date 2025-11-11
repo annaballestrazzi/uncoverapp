@@ -143,22 +143,150 @@ For coverage analysis and visualization, unCOVERApp accepts:
 - Minimum base quality
 
 For more details on working with unCOVERApp see Vignette.
-## Test
-I test sviluppati nella cartella inst/Test
-- example.list
-- example_gene.txt
+## Examples
+
+Example data files are provided in `inst/Test/`:
+- `example_gene.txt` - Sample gene list (POLG)
+- `example.list` - Sample BAM file list
+- `example_POLG.bam` - Example BAM file
+
+### Quick Start Example
+```r
+library(uncoverappLib)
+
+# Get example files
+gene_file <- system.file("Test/example_gene.txt", package = "uncoverappLib")
+bam_list <- system.file("Test/example.list", package = "uncoverappLib")
+
+# Process example data
+buildInput(
+  geneList = gene_file,
+  bamList = bam_list,
+  genome = "hg19",
+  type_bam = "chr",
+  type_input = "genes",
+  type_coverage = "bam",
+  outDir = tempdir()
+)
+```
 
 
 ## Usage
 
-Load library and set up R environment with annotation files as following. 
-The way to launch unCOVERApp is with the `run.uncoverapp(where="window")` function:
+uncoverappLib supports **two usage modes**:
 
+### Interactive Mode (Shiny App)
+
+Load library and launch the interactive web application:
 ```r
 library(uncoverappLib)
-run.uncoverapp(where="window")
+
+# Launch in RStudio window
+run.uncoverapp(where = "window")
+
+# Or in default browser
+run.uncoverapp(where = "browser")
+
+# Or in RStudio viewer pane
+run.uncoverapp(where = "viewer")
 ```
 
+**Features:**
+- Real-time coverage analysis and visualization
+- Interactive filtering by gene, chromosome, or region
+- Dynamic annotation with dbNSFP
+- Binomial probability calculator
+- maxAF calculator for rare diseases
+- Visual plots with Gviz
+- Export to formatted Excel files
+
+For detailed interactive workflow, see [Documentation.pdf](https://github.com/Manuelaio/unCOVERApp/blob/master/Documentation.pdf).
+
+---
+
+### Batch Mode (Command-Line)
+
+For automated pipelines and batch processing of multiple samples.
+
+#### Step 1: Generate Coverage Data
+
+Process BAM files or BED coverage files for target genes:
+```r
+library(uncoverappLib)
+
+# Process BAM files
+buildInput(
+  geneList = "genes.txt",           # Gene list or BED file
+  bamList = "samples.list",          # List of BAM/BED files
+  genome = "hg19",                   # hg19 or hg38
+  type_bam = "chr",                  # Chromosome notation
+  type_input = "genes",              # "genes" or "target"
+  type_coverage = "bam",             # "bam" or "bed"
+  outDir = "./output",
+  MAPQ.min = 20,
+  base.quality = 20
+)
+
+# Output files:
+# - output/output/DATE.bed (coverage data)
+# - output/output/DATE_statistical_summary.txt
+```
+
+**Input file formats:**
+
+`genes.txt`:
+```
+BRCA1
+BRCA2
+TP53
+```
+
+`samples.list`:
+```
+/path/to/sample1.bam
+/path/to/sample2.bam
+```
+
+#### Step 2: Annotate Low-Coverage Positions
+
+Identify and annotate all genomic positions below coverage threshold:
+```r
+# Annotate low-coverage positions genome-wide
+annotate_all_lowcov(
+  sample_data = "output/output/Mon_Nov_11_2024.bed",
+  target_sample = "sample1",
+  coverage_threshold = 20,
+  genome = "hg19",
+  output_intersect = "annotated.tsv",
+  output_formatted = "annotated.xlsx"
+)
+
+# Output files:
+# - annotated.tsv (tab-separated data)
+# - annotated.xlsx (formatted Excel with conditional coloring)
+```
+
+#### Batch Processing Multiple Samples
+```r
+# Process cohort
+samples <- c("sample1", "sample2", "sample3")
+coverage_file <- "output/output/Mon_Nov_11_2024.bed"
+
+for (sample in samples) {
+  annotate_all_lowcov(
+    sample_data = coverage_file,
+    target_sample = sample,
+    coverage_threshold = 20,
+    genome = "hg19",
+    output_formatted = paste0(sample, "_annotated.xlsx")
+  )
+}
+```
+
+For detailed batch processing examples, see the package vignettes.
+```
+
+---
 User can define where uncoverapp will be launched with the `where` option:
 
 - `browser` option will open `uncoverapp` in your default browser
