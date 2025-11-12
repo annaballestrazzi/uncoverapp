@@ -32,9 +32,15 @@ third.file <- system.file(
 )
 
 
-intro_processing <- system.file(
+intro_processing_short <- system.file(
   "extdata",
-  "prep_input.md",
+  "prep_input_short.md",
+  package = "uncoverappLib"
+)
+
+intro_processing_full <- system.file(
+  "extdata",
+  "prep_input_full.md",
   package = "uncoverappLib"
 )
 
@@ -50,12 +56,24 @@ intro <- function() {
 }
 
 
-
 preprocess <- function() {
   shiny::tabPanel("Processing and Statistical Summary",
-                   shiny::includeMarkdown(intro_processing),
-                       #shiny::includeMarkdown(file.path(".", "prep_input.md")),
-                       h1(strong("Prepare your input file")),
+                   # Short intro (always visible)
+                   shiny::includeMarkdown(intro_processing_short),
+                   
+                   # Collapsible full guide
+                   shinyBS::bsCollapse(
+                     id = "prep_guide_collapse",
+                     open = NULL,  # Closed by default
+                     shinyBS::bsCollapsePanel(
+                       title = HTML("<b>📖 Show detailed guide</b>"),
+                       shiny::includeMarkdown(intro_processing_full),
+                       style = "info"
+                     )
+                   ),
+                   
+                   h1(strong("Prepare your input file")),
+
                        fluidPage(
                          sidebarLayout(
                       sidebarPanel(
