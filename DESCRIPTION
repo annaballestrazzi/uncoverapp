@@ -8,7 +8,7 @@ Authors@R: c(
     person("Anna", "Ballestrazzi", email = "anna.ballestrazzi@studio.unibo.it", role = "aut"))
 Imports: markdown, shiny, shinyjs, shinyBS, shinyWidgets,shinycssloaders, DT, 
         Gviz, Homo.sapiens, openxlsx, condformat, stringr, 
-        org.Hs.eg.db, TxDb.Hsapiens.UCSC.hg38.knownGene, BiocFileCache,rappdirs,
+        org.Hs.eg.db, TxDb.Hsapiens.UCSC.hg38.knownGene, rappdirs,
         TxDb.Hsapiens.UCSC.hg19.knownGene, rlist, utils,S4Vectors,
         EnsDb.Hsapiens.v75, EnsDb.Hsapiens.v86, OrganismDbi,
         processx, Rsamtools, bedr, dplyr, tidyselect, GenomicRanges, AnnotationDbi, GenomeInfoDb, IRanges
