@@ -71,7 +71,7 @@ To prepare the input file, the following **parameters** must be specified in the
 
 ## Coordinate Systems
 
-**Important:** uncoverappLib supports different coordinate systems.
+**Important:** Specify the coordinate system of your input files:
 
 ### 0-based (BED standard)
 - Intervals are `[start, end)` (half-open)
