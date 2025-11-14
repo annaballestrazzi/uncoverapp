@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="uncoverappLib" />
+
+<meta name="date" content="2025-11-12" />
+
+<title>Batch Processing Guide</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Batch Processing Guide</h1>
+<h4 class="author">uncoverappLib</h4>
+<h4 class="date">2025-11-12</h4>
+
+
+
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<p>uncoverappLib can be used in <strong>two ways</strong>:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Interactive Mode</strong> (Shiny App) - Real-time
+exploration</li>
+<li><strong>Batch Mode</strong> (Command-line) - Automated
+pipelines</li>
+</ol>
+<p>This guide covers <strong>Batch Mode</strong> for processing multiple
+samples programmatically.</p>
+<hr />
+</div>
+<div id="workflow" class="section level1">
+<h1>Workflow</h1>
+<pre><code>Gene List + BAM Files
+         ↓
+   buildInput()
+         ↓
+    Coverage BED
+         ↓
+ annotate_all_lowcov()
+         ↓
+   Annotated Excel</code></pre>
+<hr />
+</div>
+<div id="quick-start" class="section level1">
+<h1>Quick Start</h1>
+<div id="step-1-prepare-input-files" class="section level2">
+<h2>Step 1: Prepare Input Files</h2>
+<p><strong>genes.txt:</strong></p>
+<pre><code>BRCA1
+BRCA2
+TP53</code></pre>
+<p><strong>samples.list:</strong></p>
+<pre><code>/path/to/sample1.bam
+/path/to/sample2.bam</code></pre>
+</div>
+<div id="step-2-generate-coverage" class="section level2">
+<h2>Step 2: Generate Coverage</h2>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">library</span>(uncoverappLib)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">buildInput</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">geneList =</span> <span class="st">&quot;genes.txt&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">bamList =</span> <span class="st">&quot;samples.list&quot;</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">genome =</span> <span class="st">&quot;hg19&quot;</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">type_bam =</span> <span class="st">&quot;chr&quot;</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">type_input =</span> <span class="st">&quot;genes&quot;</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="at">type_coverage =</span> <span class="st">&quot;bam&quot;</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="at">outDir =</span> <span class="st">&quot;./output&quot;</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>)</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co"># Output: ./output/output/DATE.bed</span></span></code></pre></div>
+</div>
+<div id="step-3-annotate-low-coverage" class="section level2">
+<h2>Step 3: Annotate Low Coverage</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">annotate_all_lowcov</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">sample_data =</span> <span class="st">&quot;./output/output/Mon_Nov_11_2024.bed&quot;</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">target_sample =</span> <span class="st">&quot;sample1&quot;</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">coverage_threshold =</span> <span class="dv">20</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">genome =</span> <span class="st">&quot;hg19&quot;</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">output_formatted =</span> <span class="st">&quot;sample1_annotated.xlsx&quot;</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>)</span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="detailed-examples" class="section level1">
+<h1>Detailed Examples</h1>
+<div id="example-1-single-sample" class="section level2">
+<h2>Example 1: Single Sample</h2>
+<p>Process one BAM file for a gene panel:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Input files</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;BRCA1</span><span class="sc">\n</span><span class="st">BRCA2</span><span class="sc">\n</span><span class="st">TP53</span><span class="sc">\n</span><span class="st">ATM</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">file =</span> <span class="st">&quot;panel.txt&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;/data/patient001.bam</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">file =</span> <span class="st">&quot;patient001.list&quot;</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># Step 1: Coverage</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="fu">buildInput</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">geneList =</span> <span class="st">&quot;panel.txt&quot;</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">bamList =</span> <span class="st">&quot;patient001.list&quot;</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="at">genome =</span> <span class="st">&quot;hg19&quot;</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  <span class="at">type_bam =</span> <span class="st">&quot;chr&quot;</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  <span class="at">type_input =</span> <span class="st">&quot;genes&quot;</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  <span class="at">type_coverage =</span> <span class="st">&quot;bam&quot;</span>,</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>  <span class="at">outDir =</span> <span class="st">&quot;./patient001&quot;</span>,</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>  <span class="at">MAPQ.min =</span> <span class="dv">20</span>,</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>  <span class="at">base.quality =</span> <span class="dv">20</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>)</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co"># Step 2: Annotate</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>coverage_file <span class="ot">&lt;-</span> <span class="fu">list.files</span>(</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>  <span class="st">&quot;./patient001/output&quot;</span>, </span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>  <span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.bed$&quot;</span>, </span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>  <span class="at">full.names =</span> <span class="cn">TRUE</span></span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>)[<span class="dv">1</span>]</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a><span class="fu">annotate_all_lowcov</span>(</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>  <span class="at">sample_data =</span> coverage_file,</span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>  <span class="at">target_sample =</span> <span class="st">&quot;patient001&quot;</span>,</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>  <span class="at">coverage_threshold =</span> <span class="dv">20</span>,</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a>  <span class="at">genome =</span> <span class="st">&quot;hg19&quot;</span>,</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a>  <span class="at">output_formatted =</span> <span class="st">&quot;patient001_lowcov.xlsx&quot;</span></span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a>)</span></code></pre></div>
+<hr />
+</div>
+<div id="example-2-multiple-samples" class="section level2">
+<h2>Example 2: Multiple Samples</h2>
+<p>Process a cohort:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Input</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>samples <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;patient001&quot;</span>, <span class="st">&quot;patient002&quot;</span>, <span class="st">&quot;patient003&quot;</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co"># Create BAM list</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>bam_files <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;/data/&quot;</span>, samples, <span class="st">&quot;.bam&quot;</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="fu">writeLines</span>(bam_files, <span class="st">&quot;cohort.list&quot;</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co"># Step 1: Coverage (all samples together)</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="fu">buildInput</span>(</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="at">geneList =</span> <span class="st">&quot;panel.txt&quot;</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  <span class="at">bamList =</span> <span class="st">&quot;cohort.list&quot;</span>,</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  <span class="at">genome =</span> <span class="st">&quot;hg19&quot;</span>,</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>  <span class="at">type_bam =</span> <span class="st">&quot;chr&quot;</span>,</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>  <span class="at">type_input =</span> <span class="st">&quot;genes&quot;</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>  <span class="at">type_coverage =</span> <span class="st">&quot;bam&quot;</span>,</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>  <span class="at">outDir =</span> <span class="st">&quot;./cohort&quot;</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>)</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co"># Step 2: Annotate each sample</span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>coverage_file <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="st">&quot;./cohort/output&quot;</span>, <span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.bed$&quot;</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)[<span class="dv">1</span>]</span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="cf">for</span> (sample <span class="cf">in</span> samples) {</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Processing&quot;</span>, sample, <span class="st">&quot;...</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>  </span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>  <span class="fu">annotate_all_lowcov</span>(</span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a>    <span class="at">sample_data =</span> coverage_file,</span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a>    <span class="at">target_sample =</span> sample,</span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a>    <span class="at">coverage_threshold =</span> <span class="dv">20</span>,</span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a>    <span class="at">genome =</span> <span class="st">&quot;hg19&quot;</span>,</span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a>    <span class="at">output_formatted =</span> <span class="fu">paste0</span>(sample, <span class="st">&quot;_annotated.xlsx&quot;</span>)</span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a>  )</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a>}</span></code></pre></div>
+<hr />
+</div>
+<div id="example-3-bed-coverage-faster" class="section level2">
+<h2>Example 3: BED Coverage (Faster)</h2>
+<p>Use pre-computed BED files instead of BAM:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># If you have pre-computed coverage files</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co"># (e.g., from `samtools depth`)</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># bedcov.list:</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co"># /data/sample1_coverage.bed</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co"># /data/sample2_coverage.bed</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">buildInput</span>(</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  <span class="at">geneList =</span> <span class="st">&quot;panel.txt&quot;</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  <span class="at">bamList =</span> <span class="st">&quot;bedcov.list&quot;</span>,</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  <span class="at">genome =</span> <span class="st">&quot;hg19&quot;</span>,</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="at">type_bam =</span> <span class="st">&quot;chr&quot;</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="at">type_input =</span> <span class="st">&quot;genes&quot;</span>,</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">type_coverage =</span> <span class="st">&quot;bed&quot;</span>,          <span class="co"># ← BED instead of BAM</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  <span class="at">input_coord_system =</span> <span class="st">&quot;0-based&quot;</span>, <span class="co"># ← BED uses 0-based</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  <span class="at">outDir =</span> <span class="st">&quot;./output&quot;</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>)</span></code></pre></div>
+<p><strong>Much faster!</strong> Use BED when possible.</p>
+<hr />
+</div>
+</div>
+<div id="input-file-formats" class="section level1">
+<h1>Input File Formats</h1>
+<div id="gene-list-genes.txt" class="section level2">
+<h2>Gene List (<code>genes.txt</code>)</h2>
+<p>One gene per line (HGNC symbols):</p>
+<pre><code>BRCA1
+TP53
+POLG</code></pre>
+</div>
+<div id="target-bed-target.bed" class="section level2">
+<h2>Target BED (<code>target.bed</code>)</h2>
+<p>Genomic regions (chr, start, end, name):</p>
+<pre><code>chr17   41196312    41277500    BRCA1
+chr17   7571720     7590868     TP53</code></pre>
+</div>
+<div id="bambed-list-samples.list" class="section level2">
+<h2>BAM/BED List (<code>samples.list</code>)</h2>
+<p>Absolute paths, one per line:</p>
+<pre><code>/data/cohort/patient_001.bam
+/data/cohort/patient_002.bam</code></pre>
+</div>
+<div id="bed-coverage-format" class="section level2">
+<h2>BED Coverage Format</h2>
+<pre><code>chr1    100    101    25
+chr1    101    102    30
+chr1    102    103    18</code></pre>
+<hr />
+</div>
+</div>
+<div id="output-files" class="section level1">
+<h1>Output Files</h1>
+<div id="coverage-file-.bed" class="section level2">
+<h2>Coverage File (<code>.bed</code>)</h2>
+<p>Tab-separated:</p>
+<pre><code>chromosome  start  end  count_sample1  count_sample2
+chr1        100    101  25             30
+chr1        101    102  30             35</code></pre>
+</div>
+<div id="statistical-summary-.txt" class="section level2">
+<h2>Statistical Summary (<code>.txt</code>)</h2>
+<pre><code>SYMBOL  sample    Total_bases  Mean_coverage  percentage_bases_under_20x
+BRCA1   sample1   80000        45.3           5.2</code></pre>
+</div>
+<div id="annotated-variants-.xlsx" class="section level2">
+<h2>Annotated Variants (<code>.xlsx</code>)</h2>
+<p>Excel with formatting: - Conditional colors for ClinVar, CADD, etc. -
+Filterable columns - Ready for clinical review</p>
+<hr />
+</div>
+</div>
+<div id="advanced-usage" class="section level1">
+<h1>Advanced Usage</h1>
+<div id="parallel-processing" class="section level2">
+<h2>Parallel Processing</h2>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">library</span>(parallel)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co"># Annotate samples in parallel</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="fu">mclapply</span>(samples, <span class="cf">function</span>(s) {</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="fu">annotate_all_lowcov</span>(</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>    <span class="at">sample_data =</span> coverage_file,</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>    <span class="at">target_sample =</span> s,</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>    <span class="at">coverage_threshold =</span> <span class="dv">20</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  )</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>}, <span class="at">mc.cores =</span> <span class="dv">4</span>)</span></code></pre></div>
+</div>
+<div id="custom-annotation-file" class="section level2">
+<h2>Custom Annotation File</h2>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># Use local annotation database</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="fu">annotate_all_lowcov</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">sample_data =</span> <span class="st">&quot;coverage.bed&quot;</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="at">target_sample =</span> <span class="st">&quot;sample1&quot;</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  <span class="at">annotation_file =</span> <span class="st">&quot;/custom/sorted_hg19.bed.gz&quot;</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="with-omim-phenotypes" class="section level2">
+<h2>With OMIM Phenotypes</h2>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># Add OMIM data during buildInput</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">buildInput</span>(</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="at">geneList =</span> <span class="st">&quot;genes.txt&quot;</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">bamList =</span> <span class="st">&quot;samples.list&quot;</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  <span class="at">genome =</span> <span class="st">&quot;hg19&quot;</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  <span class="at">type_bam =</span> <span class="st">&quot;chr&quot;</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>  <span class="at">type_input =</span> <span class="st">&quot;genes&quot;</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>  <span class="at">type_coverage =</span> <span class="st">&quot;bam&quot;</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>  <span class="at">outDir =</span> <span class="st">&quot;./output&quot;</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>  <span class="at">annotation_file =</span> <span class="st">&quot;omim_phenotypes.txt&quot;</span>  <span class="co"># ← Tab-separated with SYMBOL column</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>)</span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="performance-tips" class="section level1">
+<h1>Performance Tips</h1>
+<ol style="list-style-type: decimal">
+<li><strong>Use BED coverage files</strong> (10x faster than BAM)</li>
+<li><strong>Pre-filter genes</strong> if analyzing specific panels</li>
+<li><strong>Parallel processing</strong> for multiple samples</li>
+<li><strong>Larger MAPQ/base quality</strong> = fewer positions =
+faster</li>
+</ol>
+<hr />
+</div>
+<div id="troubleshooting" class="section level1">
+<h1>Troubleshooting</h1>
+<div id="no-valid-genes-found" class="section level2">
+<h2>“No valid genes found”</h2>
+<ul>
+<li>Check gene names are HGNC official symbols</li>
+<li>Verify genome assembly (hg19 vs hg38)</li>
+</ul>
+</div>
+<div id="target-sample-not-found" class="section level2">
+<h2>“Target sample not found”</h2>
+<ul>
+<li>Check column names in coverage file</li>
+<li>Use exact match (with or without “count_” prefix)</li>
+</ul>
+</div>
+<div id="cannot-find-annotation-files" class="section level2">
+<h2>“Cannot find annotation files”</h2>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="co"># Download annotation databases</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="fu">getAnnotationFiles</span>()</span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="session-info" class="section level1">
+<h1>Session Info</h1>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="co">#&gt; R version 4.4.2 (2024-10-31)</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="co">#&gt; Platform: x86_64-conda-linux-gnu</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="co">#&gt; Running under: Ubuntu 24.04.2 LTS</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a><span class="co">#&gt; BLAS/LAPACK: /home/anna/miniconda3/envs/r-env/lib/libopenblasp-r0.3.29.so;  LAPACK version 3.12.0</span></span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="co">#&gt; locale:</span></span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a><span class="co">#&gt;  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a><span class="co">#&gt;  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a><span class="co">#&gt;  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a><span class="co">#&gt;  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 </span></span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a><span class="co">#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a><span class="co">#&gt; [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       </span></span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a><span class="co">#&gt; time zone: Europe/Rome</span></span>
+<span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span id="cb19-19"><a href="#cb19-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-20"><a href="#cb19-20" tabindex="-1"></a><span class="co">#&gt; attached base packages:</span></span>
+<span id="cb19-21"><a href="#cb19-21" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span id="cb19-22"><a href="#cb19-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-23"><a href="#cb19-23" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span id="cb19-24"><a href="#cb19-24" tabindex="-1"></a><span class="co">#&gt;  [1] digest_0.6.37     R6_2.6.1          fastmap_1.2.0     xfun_0.52        </span></span>
+<span id="cb19-25"><a href="#cb19-25" tabindex="-1"></a><span class="co">#&gt;  [5] cachem_1.1.0      knitr_1.50        htmltools_0.5.8.1 rmarkdown_2.29   </span></span>
+<span id="cb19-26"><a href="#cb19-26" tabindex="-1"></a><span class="co">#&gt;  [9] lifecycle_1.0.4   cli_3.6.5         sass_0.4.10       jquerylib_0.1.4  </span></span>
+<span id="cb19-27"><a href="#cb19-27" tabindex="-1"></a><span class="co">#&gt; [13] compiler_4.4.2    rstudioapi_0.17.1 tools_4.4.2       evaluate_1.0.3   </span></span>
+<span id="cb19-28"><a href="#cb19-28" tabindex="-1"></a><span class="co">#&gt; [17] bslib_0.9.0       yaml_2.3.10       rlang_1.1.6       jsonlite_2.0.0</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,341 @@
+---
+title: "Batch Processing Guide"
+author: "uncoverappLib"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Batch Processing Guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+# Overview
+
+uncoverappLib can be used in **two ways**:
+
+1. **Interactive Mode** (Shiny App) - Real-time exploration
+2. **Batch Mode** (Command-line) - Automated pipelines
+
+This guide covers **Batch Mode** for processing multiple samples programmatically.
+
+---
+
+# Workflow
+
+```
+Gene List + BAM Files
+         ↓
+   buildInput()
+         ↓
+    Coverage BED
+         ↓
+ annotate_all_lowcov()
+         ↓
+   Annotated Excel
+```
+
+---
+
+# Quick Start
+
+## Step 1: Prepare Input Files
+
+**genes.txt:**
+```
+BRCA1
+BRCA2
+TP53
+```
+
+**samples.list:**
+```
+/path/to/sample1.bam
+/path/to/sample2.bam
+```
+
+## Step 2: Generate Coverage
+
+```{r coverage}
+library(uncoverappLib)
+
+buildInput(
+  geneList = "genes.txt",
+  bamList = "samples.list",
+  genome = "hg19",
+  type_bam = "chr",
+  type_input = "genes",
+  type_coverage = "bam",
+  outDir = "./output"
+)
+
+# Output: ./output/output/DATE.bed
+```
+
+## Step 3: Annotate Low Coverage
+
+```{r annotate}
+annotate_all_lowcov(
+  sample_data = "./output/output/Mon_Nov_11_2024.bed",
+  target_sample = "sample1",
+  coverage_threshold = 20,
+  genome = "hg19",
+  output_formatted = "sample1_annotated.xlsx"
+)
+```
+
+---
+
+# Detailed Examples
+
+## Example 1: Single Sample
+
+Process one BAM file for a gene panel:
+
+```{r example1}
+# Input files
+cat("BRCA1\nBRCA2\nTP53\nATM\n", file = "panel.txt")
+cat("/data/patient001.bam\n", file = "patient001.list")
+
+# Step 1: Coverage
+buildInput(
+  geneList = "panel.txt",
+  bamList = "patient001.list",
+  genome = "hg19",
+  type_bam = "chr",
+  type_input = "genes",
+  type_coverage = "bam",
+  outDir = "./patient001",
+  MAPQ.min = 20,
+  base.quality = 20
+)
+
+# Step 2: Annotate
+coverage_file <- list.files(
+  "./patient001/output", 
+  pattern = "\\.bed$", 
+  full.names = TRUE
+)[1]
+
+annotate_all_lowcov(
+  sample_data = coverage_file,
+  target_sample = "patient001",
+  coverage_threshold = 20,
+  genome = "hg19",
+  output_formatted = "patient001_lowcov.xlsx"
+)
+```
+
+---
+
+## Example 2: Multiple Samples
+
+Process a cohort:
+
+```{r example2}
+# Input
+samples <- c("patient001", "patient002", "patient003")
+
+# Create BAM list
+bam_files <- paste0("/data/", samples, ".bam")
+writeLines(bam_files, "cohort.list")
+
+# Step 1: Coverage (all samples together)
+buildInput(
+  geneList = "panel.txt",
+  bamList = "cohort.list",
+  genome = "hg19",
+  type_bam = "chr",
+  type_input = "genes",
+  type_coverage = "bam",
+  outDir = "./cohort"
+)
+
+# Step 2: Annotate each sample
+coverage_file <- list.files("./cohort/output", pattern = "\\.bed$", full.names = TRUE)[1]
+
+for (sample in samples) {
+  cat("Processing", sample, "...\n")
+  
+  annotate_all_lowcov(
+    sample_data = coverage_file,
+    target_sample = sample,
+    coverage_threshold = 20,
+    genome = "hg19",
+    output_formatted = paste0(sample, "_annotated.xlsx")
+  )
+}
+```
+
+---
+
+## Example 3: BED Coverage (Faster)
+
+Use pre-computed BED files instead of BAM:
+
+```{r example3}
+# If you have pre-computed coverage files
+# (e.g., from `samtools depth`)
+
+# bedcov.list:
+# /data/sample1_coverage.bed
+# /data/sample2_coverage.bed
+
+buildInput(
+  geneList = "panel.txt",
+  bamList = "bedcov.list",
+  genome = "hg19",
+  type_bam = "chr",
+  type_input = "genes",
+  type_coverage = "bed",          # ← BED instead of BAM
+  input_coord_system = "0-based", # ← BED uses 0-based
+  outDir = "./output"
+)
+```
+
+**Much faster!** Use BED when possible.
+
+---
+
+# Input File Formats
+
+## Gene List (`genes.txt`)
+One gene per line (HGNC symbols):
+```
+BRCA1
+TP53
+POLG
+```
+
+## Target BED (`target.bed`)
+Genomic regions (chr, start, end, name):
+```
+chr17   41196312    41277500    BRCA1
+chr17   7571720     7590868     TP53
+```
+
+## BAM/BED List (`samples.list`)
+Absolute paths, one per line:
+```
+/data/cohort/patient_001.bam
+/data/cohort/patient_002.bam
+```
+
+## BED Coverage Format
+```
+chr1    100    101    25
+chr1    101    102    30
+chr1    102    103    18
+```
+
+---
+
+# Output Files
+
+## Coverage File (`.bed`)
+Tab-separated:
+```
+chromosome  start  end  count_sample1  count_sample2
+chr1        100    101  25             30
+chr1        101    102  30             35
+```
+
+## Statistical Summary (`.txt`)
+```
+SYMBOL  sample    Total_bases  Mean_coverage  percentage_bases_under_20x
+BRCA1   sample1   80000        45.3           5.2
+```
+
+## Annotated Variants (`.xlsx`)
+Excel with formatting:
+- Conditional colors for ClinVar, CADD, etc.
+- Filterable columns
+- Ready for clinical review
+
+---
+
+# Advanced Usage
+
+## Parallel Processing
+
+```{r parallel}
+library(parallel)
+
+# Annotate samples in parallel
+mclapply(samples, function(s) {
+  annotate_all_lowcov(
+    sample_data = coverage_file,
+    target_sample = s,
+    coverage_threshold = 20
+  )
+}, mc.cores = 4)
+```
+
+## Custom Annotation File
+
+```{r custom_ann}
+# Use local annotation database
+annotate_all_lowcov(
+  sample_data = "coverage.bed",
+  target_sample = "sample1",
+  annotation_file = "/custom/sorted_hg19.bed.gz"
+)
+```
+
+## With OMIM Phenotypes
+
+```{r omim}
+# Add OMIM data during buildInput
+buildInput(
+  geneList = "genes.txt",
+  bamList = "samples.list",
+  genome = "hg19",
+  type_bam = "chr",
+  type_input = "genes",
+  type_coverage = "bam",
+  outDir = "./output",
+  annotation_file = "omim_phenotypes.txt"  # ← Tab-separated with SYMBOL column
+)
+```
+
+---
+
+# Performance Tips
+
+1. **Use BED coverage files** (10x faster than BAM)
+2. **Pre-filter genes** if analyzing specific panels
+3. **Parallel processing** for multiple samples
+4. **Larger MAPQ/base quality** = fewer positions = faster
+
+---
+
+# Troubleshooting
+
+## "No valid genes found"
+- Check gene names are HGNC official symbols
+- Verify genome assembly (hg19 vs hg38)
+
+## "Target sample not found"
+- Check column names in coverage file
+- Use exact match (with or without "count_" prefix)
+
+## "Cannot find annotation files"
+```{r download_ann}
+# Download annotation databases
+getAnnotationFiles()
+```
+
+---
+
+# Session Info
+
+```{r sessioninfo, eval=TRUE}
+sessionInfo()
+```
